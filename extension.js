@@ -143,6 +143,10 @@ function genLocale(inputJson, fileName) {
   if (inputJson.name && !inputJson.name.startsWith("t:")) {
     translation.name = inputJson.name;
     inputJson.name = `t:sections.${fileName}.name`;
+
+    if (inputJson.presets && inputJson.presets[0].name) {
+      inputJson.presets[0].name = inputJson.name;
+    }
   }
 
   for (const setting of inputJson.settings || []) {

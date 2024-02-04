@@ -4,14 +4,21 @@
 	"description": "Translate Liquid {% schema %} json",
 	"version": "0.0.1",
 	"publisher": "MaksymKurniy",
-	"license": "MIT",
 	"repository": "https://github.com/MaksymKurniy/schema-translation",
 	"engines": {
 		"vscode": "^1.74.0"
 	},
 	"categories": [
-		"Other"
+		"Other",
+		"Formatters",
+    "Programming Languages"
 	],
+	"tags": [
+    "shopify",
+    "liquid",
+    "formatting",
+    "html"
+  ],
 	"activationEvents": [],
 	"main": "./extension.js",
 	"contributes": {
@@ -23,10 +30,7 @@
 		]
 	},
 	"scripts": {
-    "vscode:prepublish": "npm run package",
-    "package": "vsce package",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "package": "vsce package"
   },
 	"devDependencies": {
 		"@types/vscode": "^1.73.0"
