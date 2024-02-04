@@ -116,7 +116,7 @@ function updateSchema(setting, path) {
   for (const [key, value] of Object.entries(setting)) {
     if (selectOpt.includes(key) && !value.startsWith("t:")) {
       const allPath = findSimilarLabelPath(value);
-      setting[key] = allPath ? `t:sections.all.${allPath}` : `t:sections.${path}.settings.${setting_id}.${key}`;
+      setting[key] = allPath ? `t:sections.all.${allPath}` : `${path}.settings.${setting_id}.${key}`;
 
       if (!allPath && key === 'content') typeIdx++;
     }
