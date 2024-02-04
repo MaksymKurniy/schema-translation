@@ -1,27 +1,46 @@
-# Hello World Sample
+# Schema translator
+Updates the open .liquid file in `sections` by adding the `t:` translations to the `{% schema %}` tag, the lines with the translation will be added to `locales/en.default.schema.json`. To use global names in the `en.default.schema` file there must be corresponding lines in `sections.all`
 
-This is a Hello World example that shows you how to use VS Code API.
+## Usage
+Open a .liquid file and run the `> Translate Schema` command. The extension will attempt to convert the open file.
 
-Guide for this sample: https://code.visualstudio.com/api/get-started/your-first-extension.
+---
 
-## Demo
+## Disclaimer
 
-![demo](demo.gif)
+It works only if there is a schema tag in the file. It is also advised to format your tag properly prior conversion.
 
-## VS Code API
+**❌ WRONGLY FORMATTED**
+```liquid
+{%schema %}
+{
+	...
+}
+{% endschema%}
 
-### `vscode` module
+{%schema%}{
+	...
+}
+{%endschema%}
+```
 
-- [`commands.registerCommand`](https://code.visualstudio.com/api/references/vscode-api#commands.registerCommand)
-- [`window.showInformationMessage`](https://code.visualstudio.com/api/references/vscode-api#window.showInformationMessage)
+**✅ CORRECT FORMATTING**
+```liquid
+{% schema %}
+{
+	...
+}
+{% endschema %}
+```
 
-### Contribution Points
-
-- [`contributes.commands`](https://code.visualstudio.com/api/references/contribution-points#contributes.commands)
-
-## Running the Sample
-
-- Run `npm install` in terminal to install dependencies
-- Run the `Run Extension` target in the Debug View. This will:
-	- Start a task `npm: watch` to compile the code
-	- Run the extension in a new VS Code window
+### Плюси:
++ Підтримка декількох liquid одночасно
++ Форматування schema та json
++ Підтримка All перекладів
++ Не чіпає вже перекладені рядки
++ Не потрібно додавати в кожний проект
++ Простий інтерфейс
++ Швидка робота
+### Мінуси:
+- Можливі баги
+- Можлива не підтримка нестандартного написання schema

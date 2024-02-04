@@ -2,13 +2,14 @@ const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
 const { log } = require('console');
-
-let dictionary = {};
-let liquidFile = {};
 const selectOpt = ['label', 'info', 'content']
 
-function loadJsonByPath(jsonFilePath, targetPath) {
-  const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+let dictionary = {};
+let schema = {};
+let dictionaryPath = path.join(getWorkFolder(), 'locales', 'en.default.schema.json')
+
+function getDictionaryJson(targetPath) {
+  const jsonData = JSON.parse(fs.readFileSync(dictionaryPath, 'utf8'));
   return targetPath.split('.').reduce((data, element) => (data && data[element]) ? data[element] : {}, jsonData);
 }
 
@@ -31,79 +32,67 @@ function findSimilarLabelPath(targetLabel) {
   return result;
 }
 
-function replaceInLiquid(liquidFilePath, inputJson) {
+function replaceInLiquid(inputJson) {
   try {
-    const fileUri = activeEditor.document.uri;
-    const liquidFile.content = fs.readFileSync(fileUri.fsPath, 'utf8');
-    const replacement = `{{% schema %}}\n${JSON.stringify(inputJson, null, 2)}\n{{% endschema %}}`;
-    const newLiquidContent = liquidFile.replace(/{{%\s*schema\s*%}.*?{%\s*endschema\s*%}/s, replacement);
+    const editor = vscode.window.activeTextEditor;
 
-    fs.writeFileSync(liquidFilePath, newLiquidContent, 'utf8');
-    const activeEditor = vscode.window.activeTextEditor;
-
-    if (!activeEditor) {
-        vscode.window.showErrorMessage('No active document. Exiting.');
-        return;
+    if (!editor) {
+      vscode.window.showErrorMessage('No active document. Exiting.');
+      return;
     }
 
-    const currentDocument = activeEditor.document;
-    const fullRange = new vscode.Range(0, 0, currentDocument.lineCount, 0);
-
-    activeEditor.edit(editBuilder => {
-        editBuilder.replace(fullRange, newContent);
+    editor.edit(async (editBuilder) => {
+      const document = editor.document;
+      const range  = new vscode.Range(document.positionAt(schema.startIdx), document.positionAt(schema.endIdx));
+      editBuilder.replace(range, '\n' + JSON.stringify(inputJson, null, 2) + '\n');
     });
   } catch (error) {
-    console.error(`Error in ${liquidFilePath}: ${error}`);
+    console.error(`Error replace: ${error}`);
   }
 }
 
 function loadLiquidInfo() {
-  const activeEditor = vscode.window.activeTextEditor;
-  if (!activeEditor) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
     vscode.window.showErrorMessage('No active document. Exiting.');
     return null;
   }
 
-  const fileUri = activeEditor.document.uri;
-  const workFolder = path.dirname(path.dirname(fileUri.fsPath));
+  const fileUri = editor.document.uri;
   const fileName = path.parse(path.basename(fileUri.fsPath)).name;
 
   const inputJson = extractJsonFromLiquid(fileUri.fsPath);
 
   if (!inputJson) {
-    vscode.window.showErrorMessage('{% schema %} not found in open Liquid file.');
-    return null;
+    vscode.window.showErrorMessage('{% schema %} not found or has problems.');
   }
 
-  return { inputJson, fileName, workFolder };
+  return { inputJson, fileName };
 }
 
 function extractJsonFromLiquid(liquidFilePath) {
   try {
-    liquidFile = fs.readFileSync(liquidFilePath, 'utf8');
-    const start = liquidFile.search(/{%\s*schema\s*%}/);
-    const endIdx = liquidFile.search(/{%\s*endschema\s*%}/);
+    let content = fs.readFileSync(liquidFilePath, 'utf8');
 
-    if (start !== -1 && endIdx !== -1) {
-      const startIdx = start + '{% schema %}'.length;
-      const schemaContent = liquidFile.substring(startIdx, endIdx).trim();
+    let start = content.search(/\{%\s*schema\s*%\}/i);
+    schema.endIdx = content.search(/\{%\s*endschema\s*%\}/i);
+
+    if (start !== -1 && schema.endIdx !== -1) {
+      schema.startIdx = start + '{% schema %}'.length;
+      let schemaContent = content.substring(schema.startIdx, schema.endIdx).trim();
 
       return JSON.parse(schemaContent);
     }
   } catch (error) {
-    vscode.window.showErrorMessage(`Error extracting JSON: ${error}`);
+    return null;
   }
-
-  return null;
 }
 
 function updateLocale(setting, localePath) {
-  if (typeof setting !== 'object') {
-    return;
-  }
+  if (typeof setting !== 'object') return;
+
   const setting_id = setting.id || `${setting.type}__${typeIdx}`;
   localePath[setting_id] = {};
-
 
   for (const [key, value] of Object.entries(setting)) {
     if (selectOpt.includes(key) && !value.startsWith("t:") && !findSimilarLabelPath(value)) {
@@ -120,9 +109,8 @@ function updateLocale(setting, localePath) {
 }
 
 function updateSchema(setting, path) {
-  if (typeof setting !== 'object') {
-    return;
-  }
+  if (typeof setting !== 'object') return;
+
   const setting_id = setting.id || `${setting.type}__${typeIdx}`;
 
   for (const [key, value] of Object.entries(setting)) {
@@ -130,18 +118,14 @@ function updateSchema(setting, path) {
       const allPath = findSimilarLabelPath(value);
       setting[key] = allPath ? `t:sections.all.${allPath}` : `t:sections.${path}.settings.${setting_id}.${key}`;
 
-      if (!allPath && key === 'content') {
-        typeIdx++;
-      }
+      if (!allPath && key === 'content') typeIdx++;
     }
 
     if (key === 'options' && Array.isArray(value)) {
       value.forEach((option, idx) => {
         if (option.label && !option.label.startsWith("t:") && !option.label.match(/^\d+$/)) {
           const allPath = findSimilarLabelPath(option.label);
-          option.label = allPath ?
-          `t:sections.all.${allPath}` :
-          `${path}.settings.${setting.id}.options__${idx + 1}.label`;
+          option.label = allPath ? `t:sections.all.${allPath}` : `${path}.settings.${setting.id}.options__${idx + 1}.label`;
         }
       });
     }
@@ -178,43 +162,32 @@ function genLocale(inputJson, fileName) {
     }
   }
 
-
   return { sections: { [fileName]: translation } };
 }
 
-function delEmptyObjects(jsonData) {
-  if (typeof jsonData === 'object') {
-    for (const [key, value] of Object.entries(jsonData)) {
-      if (typeof value === 'object') {
-        delEmptyObjects(value);
-      }
-
-      if (value === null || value === ""
-      || (Array.isArray(value) && value.length === 0)
-      || (typeof value === 'object' && Object.keys(value).length === 0)) {
-        delete jsonData[key];
+function delEmptyObjects(obj) {
+  for (var key in obj) {
+    if (obj[key] && typeof obj[key] === 'object') {
+      if (Object.keys(obj[key]).length === 0) {
+        delete obj[key];
+      } else {
+        delEmptyObjects(obj[key]);
+        if (Object.keys(obj[key]).length === 0) {
+          delete obj[key];
+        }
       }
     }
-  } else if (Array.isArray(jsonData)) {
-    jsonData.forEach((item, index) => {
-      delEmptyObjects(item);
-      if (item === null || item === ""
-      || (Array.isArray(item) && item.length === 0)
-      || (typeof item === 'object' && Object.keys(item).length === 0)) {
-        jsonData.splice(index, 1);
-      }
-    });
   }
+  return obj;
 }
 
-function addTranslations(jsonFilePath, newLocale) {
+function replaceInLocale(newLocale) {
   try {
-    const existingLocaleContent = fs.readFileSync(jsonFilePath, 'utf8');
-    const existingLocale = JSON.parse(existingLocaleContent);
+    const existingLocale = JSON.parse(fs.readFileSync(dictionaryPath, 'utf8'));
     const updatedTranslations = recursiveAdd(existingLocale, newLocale);
     delEmptyObjects(updatedTranslations);
 
-    fs.writeFileSync(jsonFilePath, JSON.stringify(updatedTranslations, null, 2), 'utf8');
+    fs.writeFileSync(dictionaryPath, JSON.stringify(updatedTranslations, null, 2), 'utf8');
   } catch (error) {
     vscode.window.showErrorMessage(`Error adding translations: ${error}`);
   }
@@ -228,23 +201,22 @@ function recursiveAdd(target, source) {
       target[key] = value;
     }
   }
-
   return target;
 }
 
+function getWorkFolder() {
+  const workFolder = vscode.workspace.workspaceFolders;
+  return (!workFolder || workFolder.length === 0)? null : workFolder[0].uri.fsPath;
+}
+
 function translateSchema() {
-  const { inputJson, fileName, workFolder } = loadLiquidInfo();
+  const { inputJson, fileName } = loadLiquidInfo();
+  if (!inputJson) return;
 
-  if (!inputJson) {
-    return;
-  }
+  dictionary = getDictionaryJson('sections.all');
 
-  const dictionaryPath = path.join(workFolder, 'locales', 'en.default.schema.json');
-  dictionary = loadJsonByPath(dictionaryPath, 'sections.all');
-
-  const newLocale = genLocale(inputJson, fileName);
-  addTranslations(dictionaryPath, newLocale);
-  replaceInLiquid(path.join(workFolder, 'sections', `${fileName}.liquid`), inputJson);
+  replaceInLocale(genLocale(inputJson, fileName));
+  replaceInLiquid(inputJson);
 }
 
 function activate() {

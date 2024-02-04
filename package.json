@@ -1,7 +1,7 @@
 {
 	"name": "translate-schema",
-	"displayName": "Translate Schema",
-	"description": "Translate Liquid schema files",
+	"displayName": "Schema translator",
+	"description": "Translate Liquid {% schema %} json",
 	"version": "0.0.1",
 	"publisher": "MaksymKurniy",
 	"license": "MIT",
