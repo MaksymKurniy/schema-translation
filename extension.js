@@ -64,7 +64,7 @@ function loadLiquidInfo() {
   const inputJson = extractJsonFromLiquid(fileUri.fsPath);
 
   if (!inputJson) {
-    vscode.window.showErrorMessage('{% schema %} not found or has problems.');
+    vscode.window.showErrorMessage('{% schema %} not found or has errors.');
   }
 
   return { inputJson, fileName };
@@ -97,8 +97,7 @@ function updateLocale(setting, localePath) {
   for (const [key, value] of Object.entries(setting)) {
     if (selectOpt.includes(key) && !value.startsWith("t:") && !findSimilarLabelPath(value)) {
       localePath[setting_id][key] = value;
-    }
-    if (key === 'options' && Array.isArray(value)) {
+    } else if (key === 'options' && Array.isArray(value)) {
       value.forEach((option, idx) => {
         if (option.label && !option.label.startsWith("t:") && !option.label.match(/^\d+$/) && !findSimilarLabelPath(option.label)) {
           localePath[setting_id][`options__${idx}`] = { "label": option.label };
@@ -119,9 +118,7 @@ function updateSchema(setting, path) {
       setting[key] = allPath ? `t:sections.all.${allPath}` : `${path}.settings.${setting_id}.${key}`;
 
       if (!allPath && key === 'content') typeIdx++;
-    }
-
-    if (key === 'options' && Array.isArray(value)) {
+    } else if (key === 'options' && Array.isArray(value)) {
       value.forEach((option, idx) => {
         if (option.label && !option.label.startsWith("t:") && !option.label.match(/^\d+$/)) {
           const allPath = findSimilarLabelPath(option.label);
@@ -135,7 +132,7 @@ function updateSchema(setting, path) {
 function genLocale(inputJson, fileName) {
   typeIdx = 1;
   if (fileName.includes("section-")) {
-    fileName = fileName.replace("section-", "");
+    fileName = fileName.replace("section-", "").replace("main-", "");
   }
 
   const translation = { name: {}, settings: {}, blocks: {} };
@@ -155,7 +152,7 @@ function genLocale(inputJson, fileName) {
   }
 
   for (const block of (inputJson.blocks || []).filter(b => !b.type.includes('@app'))) {
-    translation.blocks[block.type] = {name: block.name, settings: {}};
+    translation.blocks[block.type] = {settings: {}};
     if (block.name && !block.name.startsWith("t:")) {
       block.name = `t:sections.${fileName}.blocks.${block.type}.name`;
     }
