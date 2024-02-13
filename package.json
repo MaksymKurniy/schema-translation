@@ -19,12 +19,15 @@
     "formatting",
     "html"
   ],
-	"activationEvents": [],
-	"main": "./extension.js",
+	"activationEvents": [
+    "onStartupFinished"
+  ],
+	"main": "./src/extension.js",
 	"contributes": {
 		"commands": [
 			{
 				"command": "extension.translateSchema",
+				"when": "editorLangId == liquid",
 				"title": "Translate Schema"
 			}
 		]

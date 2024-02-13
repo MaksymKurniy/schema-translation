@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { log } = require('console');
 const selectOpt = ['label', 'info', 'content']
+const { LinkDefinitionProvider } = require("./LinkDefinitionProvider");
+
+
+let activeRules = [];
 
 let dictionary = {};
 let schema = {};
@@ -220,8 +224,15 @@ function translateSchema() {
   replaceInLiquid(inputJson);
 }
 
-function activate() {
-  vscode.commands.registerCommand('extension.translateSchema', () => translateSchema());
+function activate(context) {
+  let linkProvider = new LinkDefinitionProvider('"t:.*"', dictionaryPath);
+
+  activeRule = vscode.languages.registerDocumentLinkProvider('liquid', linkProvider);
+
+  disposable = vscode.commands.registerCommand('extension.translateSchema', () => translateSchema());
+
+  context.subscriptions.push(activeRule);
+  context.subscriptions.push(disposable);
 }
 function deactivate() {}
 
