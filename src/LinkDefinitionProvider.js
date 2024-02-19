@@ -18,11 +18,11 @@ class LinkDefinitionProvider {
       };
     }
 
-    let keys = jsonPath.split(".");
     let keyIdx = 0;
     let start_line = 0;
-    let lines = this.dictionatyContent.split("\n");
     let tooltip = this.dictionatyJson;
+    const keys = jsonPath.split(".");
+    const lines = this.dictionatyContent.split("\n");
 
     for (const key of keys) {
       tooltip = tooltip[key];
@@ -39,7 +39,7 @@ class LinkDefinitionProvider {
     for (let i = start_line; i < lines.length; i++) {
       if (lines[i].includes(`"${keys[keyIdx]}":`)) {
         keyIdx++;
-        let pathLine = keys.slice(0, keyIdx).join(".");
+        const pathLine = keys.slice(0, keyIdx).join(".");
         if (!this.pathCache[pathLine]) {
           this.pathCache[pathLine] = { line: i, keyIdx: keyIdx - 1 };
         }

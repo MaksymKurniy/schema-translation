@@ -7,7 +7,7 @@ const { LinkDefinitionProvider } = require("./LinkDefinitionProvider");
 
 let dictionary = {};
 let schema = {};
-let dictionaryPath = path.join(getWorkFolder(), 'locales', 'en.default.schema.json')
+const dictionaryPath = path.join(getWorkFolder(), 'locales', 'en.default.schema.json')
 
 function getDictionaryJson(targetPath) {
   const jsonData = JSON.parse(fs.readFileSync(dictionaryPath, "utf8"));
@@ -100,15 +100,15 @@ function loadLiquidInfo(document) {
 
 function extractJsonFromLiquid(document) {
   try {
-    let content = document.getText();
-    let start = content.search(/\{%\s*schema\s*%\}/i);
+    const content = document.getText();
+    const start = content.search(/\{%\s*schema\s*%\}/i);
     schema.endIdx = content.search(/\{%\s*endschema\s*%\}/i);
 
     if (start !== -1 && schema.endIdx !== -1) {
       schema.startIdx = start + '{% schema %}'.length;
-      let schemaContent = content.substring(schema.startIdx, schema.endIdx).trim();
+      const inputJson = content.substring(schema.startIdx, schema.endIdx).trim();
 
-      return JSON.parse(schemaContent);
+      return JSON.parse(inputJson);
     }
   } catch (error) {
     return null;
@@ -191,7 +191,7 @@ function recursiveAdd(target, source) {
       target[key] = value;
     }
   }
-  
+
   return target;
 }
 
