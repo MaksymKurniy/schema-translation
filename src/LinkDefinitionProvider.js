@@ -1,5 +1,6 @@
 const vscode = require("vscode");
 const fs = require("fs");
+const JSON5 = require('json5');
 const { log } = require("console");
 
 class LinkDefinitionProvider {
@@ -11,23 +12,12 @@ class LinkDefinitionProvider {
   }
 
   findValueByPath(jsonPath) {
-    if (this.lineCache[jsonPath]) {
-      return {
-        line: this.lineCache[jsonPath].line,
-        tooltip: this.lineCache[jsonPath].tooltip,
-      };
-    }
+    if (this.lineCache[jsonPath]) return this.lineCache[jsonPath];
 
     let keyIdx = 0;
     let start_line = 0;
-    let tooltip = this.dictionatyJson;
     const keys = jsonPath.split(".");
     const lines = this.dictionatyContent.split("\n");
-
-    for (const key of keys) {
-      tooltip = tooltip[key];
-      if (!tooltip) return { line: -1, tooltip };
-    }
 
     for (const [key, value] of Object.entries(this.pathCache)) {
       if (jsonPath.includes(key) && value.line > start_line) {
@@ -45,17 +35,17 @@ class LinkDefinitionProvider {
         }
 
         if (keyIdx == keys.length) {
-          this.lineCache[jsonPath] = { line: i + 1, tooltip: tooltip };
+          this.lineCache[jsonPath] = i + 1;
           return this.lineCache[jsonPath];
         }
       }
     }
-    return { line: -1, tooltip };
+    return -1;
   }
 
   provideDocumentLinks(document) {
     this.dictionatyContent = fs.readFileSync(this.targetTemplate, "utf8");
-    this.dictionatyJson = JSON.parse(this.dictionatyContent);
+    this.dictionatyJson = JSON5.parse(this.dictionatyContent);
     const text = document.getText();
     const links = [];
 
@@ -63,13 +53,11 @@ class LinkDefinitionProvider {
     while ((match = this.regEx.exec(text))) {
       const startPos = document.positionAt(match.index + 3); // slice "t:
       const endPos = document.positionAt(match.index + match[0].length - 1); // slice "
-      const range = new vscode.Range(startPos, endPos);
-      const { line, tooltip } = this.findValueByPath(match[0].slice(3, -1));
+      const line = this.findValueByPath(match[0].slice(3, -1));
       if (line == -1) continue;
 
       links.push({
-        range,
-        tooltip: `Translate: "${tooltip}"`,
+        range: new vscode.Range(startPos, endPos),
         target: vscode.Uri.from({
           path: this.targetTemplate,
           fragment: `L${line}`,

@@ -2,7 +2,7 @@
 	"name": "translate-schema",
 	"displayName": "Schema translator",
 	"description": "Translate Liquid {% schema %} json",
-	"version": "0.0.1",
+	"version": "0.0.4",
 	"publisher": "MaksymKurniy",
 	"repository": "https://github.com/MaksymKurniy/schema-translation",
 	"engines": {
@@ -11,31 +11,33 @@
 	"categories": [
 		"Other",
 		"Formatters",
-    "Programming Languages"
+		"Programming Languages"
 	],
 	"tags": [
-    "shopify",
-    "liquid",
-    "formatting",
-    "html"
-  ],
+		"shopify",
+		"liquid",
+		"formatting",
+		"html"
+	],
 	"activationEvents": [
-    "onStartupFinished"
-  ],
+		"onStartupFinished"
+	],
 	"main": "./src/extension.js",
 	"contributes": {
 		"commands": [
 			{
 				"command": "extension.translateSchema",
-				"when": "editorLangId == liquid",
 				"title": "Translate Schema"
 			}
 		]
 	},
 	"scripts": {
-    "package": "vsce package"
-  },
+		"package": "vsce package"
+	},
 	"devDependencies": {
 		"@types/vscode": "^1.54.0"
+	},
+	"dependencies": {
+		"json5": "^2.2.3"
 	}
 }
