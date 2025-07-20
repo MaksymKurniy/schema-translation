@@ -10,11 +10,17 @@ let dictionary = {};
 let schema = {};
 const dictionaryPath = path.join(getWorkFolder(), 'locales', 'en.default.schema.json');
 
+function setDictionary(dict) {
+  dictionary = dict;
+}
+
 function getDictionaryJson(targetPath) {
   try {
     const rawContent = fs.readFileSync(dictionaryPath, 'utf8');
     const jsonData = JSON5.parse(rawContent);
-    return targetPath.split('.').reduce((data, element) => (data && data[element] ? data[element] : {}), jsonData);
+    return targetPath
+      ? targetPath.split('.').reduce((data, element) => (data && data[element] ? data[element] : {}), jsonData)
+      : jsonData;
   } catch (error) {
     vscode.window.showErrorMessage(`Error parsing JSON: ${error.message}`);
     return {};
@@ -26,10 +32,11 @@ function getWorkFolder() {
   return !workFolder || workFolder.length === 0 ? null : workFolder[0].uri.fsPath;
 }
 
-function findSimilarLabelPath(targetLabel) {
+function findSimilarLabelPath(targetLabel, startPatch) {
   function recursiveSearch(currentPath, currentValue) {
-    if (result) return;
+    if (result || currentValue == undefined) return;
 
+    log;
     if (typeof currentValue === 'object') {
       for (const [key, value] of Object.entries(currentValue)) {
         const newPath = currentPath ? `${currentPath}.${key}` : key;
@@ -41,7 +48,7 @@ function findSimilarLabelPath(targetLabel) {
   }
 
   let result = null;
-  recursiveSearch('', dictionary);
+  recursiveSearch('', startPatch ? dictionary[startPatch] : dictionary);
   return result;
 }
 
@@ -62,6 +69,8 @@ function delEmptyObjects(obj) {
 }
 
 function replaceInLocale(newLocale) {
+  console.log(newLocale);
+
   try {
     const existingLocale = JSON5.parse(fs.readFileSync(dictionaryPath, 'utf8'));
     const updatedTranslations = recursiveAdd(existingLocale, newLocale);
@@ -208,6 +217,70 @@ function genLocale(inputJson, fileName) {
   return { sections: { [fileName]: translation } };
 }
 
+function toSnakeCase(str) {
+  if (!str) return str;
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function genNewTypeLocale(inputJson, fileName) {
+  const translation = {
+    names: {},
+    settings: {},
+    content: {},
+    info: {},
+    options: {},
+    categories: {},
+  };
+
+  function handleField(obj, field, dictKey, transObj, snake = false) {
+    if (
+      obj[field] &&
+      !obj[field].startsWith('t:') &&
+      !/^\d+$/.test(obj[field]) &&
+      !/^\d+(\.\d+)?\s*(px|rem|em|%|vh|vw)?$/.test(obj[field])
+    ) {
+      const existKey = findSimilarLabelPath(obj[field], dictKey);
+      if (existKey) {
+        obj[field] = `t:${dictKey}.${existKey}`;
+      } else {
+        const key = snake ? toSnakeCase(obj[field]) : obj.id || obj.type;
+        transObj[key] = obj[field];
+        obj[field] = `t:${dictKey}.${key}`;
+      }
+    }
+  }
+
+  // name
+  handleField(inputJson, 'name', 'names', translation.names, true);
+
+  // settings
+  for (const s of inputJson.settings || []) {
+    handleField(s, 'label', 'settings', translation.settings);
+    handleField(s, 'info', 'info', translation.info);
+    handleField(s, 'content', 'content', translation.content, true);
+
+    // options
+    if (Array.isArray(s.options)) {
+      s.options.forEach((opt, idx) => {
+        handleField(opt, 'label', 'options', translation.options, true);
+      });
+    }
+  }
+
+  // presets
+  if (Array.isArray(inputJson.presets)) {
+    for (const preset of inputJson.presets) {
+      handleField(preset, 'name', 'names', translation.names, true);
+      handleField(preset, 'category', 'categories', translation.categories, true);
+    }
+  }
+
+  return translation;
+}
+
 function recursiveAdd(target, source) {
   for (const [key, value] of Object.entries(source)) {
     if (typeof value === 'object') {
@@ -229,9 +302,15 @@ function translateSchema() {
   const { inputJson, fileName } = loadLiquidInfo(editor.document);
   if (!inputJson) return;
 
-  dictionary = getDictionaryJson('sections.all');
+  dictionary = getDictionaryJson();
+  if (dictionary.sections != undefined) {
+    dictionary = getDictionaryJson('sections.all');
 
-  replaceInLocale(genLocale(inputJson, fileName));
+    replaceInLocale(genLocale(inputJson, fileName));
+  } else {
+    replaceInLocale(genNewTypeLocale(inputJson, fileName));
+  }
+
   replaceInLiquid(editor, inputJson);
 }
 
@@ -249,4 +328,10 @@ function deactivate() {}
 module.exports = {
   activate,
   deactivate,
+
+  getDictionaryJson,
+  findSimilarLabelPath,
+  delEmptyObjects,
+  setDictionary,
+  translateSchema,
 };

@@ -1,8 +1,8 @@
 {
 	"name": "translate-schema",
 	"displayName": "Schema translator",
-	"description": "Translate Liquid {% schema %} json",
-	"version": "0.0.4",
+	"description": "Translate Liquid {% schema %} json and theme settings",
+	"version": "0.0.5",
 	"publisher": "MaksymKurniy",
 	"repository": "https://github.com/MaksymKurniy/schema-translation",
 	"engines": {
@@ -32,10 +32,12 @@
 		]
 	},
 	"scripts": {
-		"package": "vsce package"
+		"package": "vsce package",
+		"test": "jest"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.54.0"
+		"@types/vscode": "^1.54.0",
+		"jest": "^30.0.4"
 	},
 	"dependencies": {
 		"json5": "^2.2.3"

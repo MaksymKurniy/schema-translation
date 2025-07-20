@@ -1,0 +1,76 @@
+{
+  "categories": {
+    "banners": "Banners",
+    "basic": "Basic",
+    "collection": "Collection",
+    "collections": "Collections",
+    "collection_list": "Collection list",
+    "custom": "Custom",
+    "decorative": "Decorative",
+    "text": "Text"
+  },
+  "content": {
+    "fonts": "Fonts",
+    "grid": "Grid",
+    "grid_layout": "Grid layout",
+    "heading_size": "Heading size",
+    "home_page": "Home page",
+    "icon": "Icon",
+    "image": "Image",
+    "images": "Images",
+    "input": "Input",
+    "inverse_logo_info": "Used when transparent header background is set to Inverse",
+    "layout": "Layout",
+    "link": "Link",
+    "link_padding": "Link padding",
+    "localization": "Localization",
+    "logo": "Logo"
+  },
+  "html_defaults": {
+    "subheading": "<p>Subheading</p>",
+    "heading": "<p>Heading</p>"
+  },
+  "info": {
+    "applies_on_image_only": "Applies to images only",
+    "aspect_ratio_adjusted": "Adjusted in some layouts"
+  },
+  "names": {
+    "submit_button": "Submit button",
+    "summary": "Summary",
+    "swatches": "Swatches",
+    "swatches-meta": "Swatches meta",
+    "testimonials": "Testimonials",
+    "product_card": "Product card"
+  },
+  "options": {
+    "h1": "Heading 1",
+    "h2": "Heading 2",
+    "h3": "Heading 3",
+    "h4": "Subheading",
+    "h5": "Body (small)",
+    "h6": "Additional text style",
+    "heading": "Heading"
+  },
+  "settings": {
+    "layout": "Layout",
+    "layout_gap": "Layout gap",
+    "layout_style": "Style",
+    "layout_type": "Type",
+    "left": "Left",
+    "left_padding": "Left padding",
+    "product": "Product"
+  },
+  "text_defaults": {
+    "accordion_heading": "Accordion heading",
+    "be_bold": "Be bold.",
+    "button_label": "Shop now",
+    "collapsible_row": "Collapsible row",
+    "contact_form_button_label": "Submit",
+    "email_signup_button_label": "Subscribe",
+    "heading": "Heading",
+    "popup_link": "Popup link",
+    "sign_up": "Sign up",
+    "shop_our_latest_arrivals": "Shop our latest arrivals!",
+    "welcome_to_our_store": "Welcome to our store"
+  }
+}
