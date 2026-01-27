@@ -1,3 +1,6 @@
+/*
+  English default schema translations
+*/
 {
   "categories": {
     "banners": "Banners",
@@ -10,11 +13,13 @@
     "text": "Text"
   },
   "content": {
+    // General terms
     "fonts": "Fonts",
     "grid": "Grid",
     "grid_layout": "Grid layout",
     "heading_size": "Heading size",
     "home_page": "Home page",
+    // Schema element types
     "icon": "Icon",
     "image": "Image",
     "images": "Images",

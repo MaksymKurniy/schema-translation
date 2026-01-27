@@ -1,10 +1,9 @@
 const vscode = require('vscode');
-const JSON5 = require('json5');
+const commentJson = require('comment-json');
 const path = require('path');
 const fs = require('fs');
 const { log } = require('console');
 const selectOpt = ['label', 'info', 'content'];
-const { LinkDefinitionProvider } = require('./LinkDefinitionProvider');
 
 let dictionary = {};
 let schema = {};
@@ -17,7 +16,7 @@ function setDictionary(dict) {
 function getDictionaryJson(targetPath) {
   try {
     const rawContent = fs.readFileSync(dictionaryPath, 'utf8');
-    const jsonData = JSON5.parse(rawContent);
+    const jsonData = commentJson.parse(rawContent);
     return targetPath
       ? targetPath.split('.').reduce((data, element) => (data && data[element] ? data[element] : {}), jsonData)
       : jsonData;
@@ -72,11 +71,12 @@ function replaceInLocale(newLocale) {
   console.log(newLocale);
 
   try {
-    const existingLocale = JSON5.parse(fs.readFileSync(dictionaryPath, 'utf8'));
+    const rawContent = fs.readFileSync(dictionaryPath, 'utf8');
+    const existingLocale = commentJson.parse(rawContent);
     const updatedTranslations = recursiveAdd(existingLocale, newLocale);
     delEmptyObjects(updatedTranslations);
 
-    fs.writeFileSync(dictionaryPath, JSON.stringify(updatedTranslations, null, 2), 'utf8');
+    fs.writeFileSync(dictionaryPath, commentJson.stringify(updatedTranslations, null, 2), 'utf8');
   } catch (error) {
     vscode.window.showErrorMessage(`Error adding translations: ${error}`);
   }
@@ -88,7 +88,7 @@ function replaceInLiquid(editor, inputJson) {
       const document = editor.document;
       const range = new vscode.Range(document.positionAt(schema.startIdx), document.positionAt(schema.endIdx));
       const newLine = document.languageId === 'jsonc' || document.languageId === 'json' ? '' : '\n';
-      editBuilder.replace(range, `${newLine + JSON.stringify(inputJson, null, 2)}\n`);
+      editBuilder.replace(range, `${newLine + commentJson.stringify(inputJson, null, 2)}\n`);
     });
   } catch (error) {
     console.error(`Error replace: ${error}`);
@@ -115,7 +115,7 @@ function extractJsonFromLiquid(document, isJson) {
     if (isJson) {
       schema.startIdx = 0;
       schema.endIdx = content.length;
-      return JSON5.parse(content);
+      return commentJson.parse(content);
     }
     const start = content.search(/\{%\s*schema\s*%\}/i);
     schema.endIdx = content.search(/\{%\s*endschema\s*%\}/i);
@@ -124,7 +124,7 @@ function extractJsonFromLiquid(document, isJson) {
       schema.startIdx = start + '{% schema %}'.length;
       const inputJson = content.substring(schema.startIdx, schema.endIdx).trim();
 
-      return JSON5.parse(inputJson);
+      return commentJson.parse(inputJson);
     }
   } catch (error) {
     return null;
@@ -315,12 +315,7 @@ function translateSchema() {
 }
 
 function activate(context) {
-  let linkProvider = new LinkDefinitionProvider('"t:.*"', dictionaryPath);
-
-  activeRule = vscode.languages.registerDocumentLinkProvider(['liquid', 'json'], linkProvider);
   disposable = vscode.commands.registerCommand('extension.translateSchema', () => translateSchema());
-
-  context.subscriptions.push(activeRule);
   context.subscriptions.push(disposable);
 }
 function deactivate() {}

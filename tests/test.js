@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const JSON5 = require('json5');
 const { getDictionaryJson, setDictionary, findSimilarLabelPath, delEmptyObjects, translateSchema } = require('../src/extension');
 
 describe('getDictionaryJson', () => {
