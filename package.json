@@ -2,7 +2,7 @@
 	"name": "translate-schema",
 	"displayName": "Schema translator",
 	"description": "Translate Liquid {% schema %} json and theme settings",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"publisher": "MaksymKurniy",
 	"repository": "https://github.com/MaksymKurniy/schema-translation",
 	"engines": {
